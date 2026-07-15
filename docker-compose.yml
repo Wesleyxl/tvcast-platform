@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # O Backend
+  api:
+    build: ./apps/api
+    container_name: tvcast-api
+    volumes:
+      - ./apps/api:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  # O Frontend
+  web:
+    build: ./apps/web
+    container_name: tvcast-web
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/web:/app
+
+  # O Banco de Dados
+  db:
+    image: mysql:8.0
+    container_name: tvcast-db
+    environment:
+      MYSQL_DATABASE: tvcast
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3306:3306"
+
+  # O Cache e Filas
+  redis:
+    image: redis:alpine
+    container_name: tvcast-redis

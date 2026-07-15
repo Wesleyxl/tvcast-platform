@@ -1,0 +1,22 @@
+# Logs e Cache
+/storage/logs/*
+/storage/framework/views/*
+/storage/framework/cache/*
+/bootstrap/cache/*
+
+# Node e dependências
+/node_modules
+/apps/web/node_modules
+/apps/web/dist
+/apps/api/vendor
+
+# Docker e Ambiente
+.env
+.env.example
+docker-compose.override.yml
+.phpunit.result.cache
+
+# MacOS e IDE
+.DS_Store
+.vscode
+.idea

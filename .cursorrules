@@ -1,0 +1,25 @@
+# Contexto do Projeto: TVCast (Streaming Platform)
+
+## Stack Tecnológica
+- Backend: Laravel 11.x (PHP 8.3+)
+- Frontend: React 18+ com Vite e TypeScript
+- Database: MySQL 8
+- Cache/Queue: Redis
+- Infra: Docker Compose (Monorepo)
+
+## Regras de Codificação
+- Strict Type: Sempre use TypeScript no Frontend.
+- Clean Architecture: No Laravel, use FormRequests para validação e Resources para respostas de API.
+- Performance: O front deve priorizar carregamento preguiçoso (lazy loading) e React Query para cache.
+- Segurança: Nunca exponha tokens ou credenciais no git (use .env).
+- Estilo: Use Tailwind CSS para estilização e Shadcn/UI para componentes.
+
+## Estrutura de Pastas (Monorepo)
+- /apps/api: Aplicação Laravel.
+- /apps/web: Aplicação React/Vite.
+- /docker-compose.yml: Orquestração.
+
+## Mentalidade do Desenvolvedor
+- Sempre considere a escalabilidade para TV (Navegação via D-PAD/Keyboard em breve).
+- Ao sugerir código, leve em conta que a API será consumida pelo Frontend via REST.
+- Priorize a economia de requisições ao serviço de IPTV (Use Jobs e Cache).
