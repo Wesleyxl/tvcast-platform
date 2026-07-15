@@ -1,0 +1,425 @@
+---
+description: Política de testes — quando testar, critérios de qualidade e fluxo para correção de bugs
+globs:
+  - 'src/**/*'
+  - 'app/**/*'
+  - 'lib/**/*'
+  - 'tests/**/*'
+  - 'test/**/*'
+alwaysApply: false
+---
+
+# Política de testes
+
+## Objetivo
+
+Definir quando os testes são necessários, qual nível mínimo de validação deve ser aplicado e como proteger o comportamento do sistema durante novas implementações, correções e refatorações.
+
+Testes devem proteger comportamentos e contratos relevantes, não apenas aumentar métricas de cobertura.
+
+A política de testes existente no projeto, incluindo configurações de CI e convenções já adotadas, tem prioridade sobre esta orientação geral.
+
+## Princípios gerais
+
+- Teste comportamento observável, não detalhes internos desnecessários.
+- Use o framework e os comandos já configurados no projeto.
+- Siga a estrutura e a nomenclatura dos testes existentes.
+- Prefira testes determinísticos, claros e independentes.
+- Mantenha cada teste focado em um comportamento.
+- Cubra cenários de sucesso e falha quando ambos forem relevantes.
+- Evite testes frágeis acoplados à ordem interna de chamadas.
+- Não adicione um segundo test runner sem justificativa e aprovação.
+- Não remova ou enfraqueça testes apenas para fazer a suíte passar.
+- Não ignore uma falha de teste sem investigar sua causa.
+- Atualize os testes junto com a alteração de comportamento.
+
+## Quando os testes são obrigatórios
+
+| Tipo de alteração                           | Expectativa mínima                                                                       |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Nova funcionalidade ou caso de uso          | Pelo menos um teste do caminho principal                                                 |
+| Correção de bug                             | Teste de regressão que reproduza o problema                                              |
+| Alteração de contrato de API                | Teste de contrato ou integração para entrada e saída                                     |
+| Alteração de autenticação ou autorização    | Testes de sucesso, falha e acesso indevido                                               |
+| Alteração de pagamento ou dados financeiros | Testes de sucesso, falha, duplicidade e casos críticos                                   |
+| Mutação de dados                            | Testes de criação, atualização, exclusão e falhas relevantes                             |
+| Refatoração sem mudança de comportamento    | Testes existentes devem continuar passando; adicione testes se uma lacuna for encontrada |
+| Alteração de componente de interface        | Teste de comportamento relevante, quando houver infraestrutura para isso                 |
+| Alteração de integração externa             | Teste do contrato, adaptador ou fluxo de integração                                      |
+| Alteração de validação                      | Testes para entradas válidas, inválidas e limites importantes                            |
+
+A expectativa mínima pode aumentar conforme o risco da mudança.
+
+## Escolha do nível de teste
+
+Escolha o teste mais próximo do comportamento que precisa ser protegido.
+
+### Teste unitário
+
+Use para:
+
+- regras de domínio;
+- funções puras;
+- transformações;
+- validações isoladas;
+- casos de uso com dependências controladas.
+
+### Teste de integração
+
+Use para:
+
+- repositórios;
+- banco de dados;
+- filas;
+- adaptadores;
+- integração entre módulos;
+- contratos com serviços externos;
+- composição de componentes.
+
+### Teste de contrato
+
+Use para:
+
+- APIs públicas;
+- eventos;
+- schemas;
+- integrações entre serviços;
+- formatos consumidos por clientes externos.
+
+### Teste de ponta a ponta
+
+Use quando for necessário validar o fluxo completo do usuário ou do sistema, especialmente em:
+
+- autenticação;
+- checkout;
+- pagamentos;
+- fluxos críticos de negócio;
+- integrações entre múltiplos componentes.
+
+Não use testes de ponta a ponta para todos os casos quando testes unitários ou de integração forem suficientes.
+
+## Framework e convenções
+
+Use o framework já configurado no projeto, como:
+
+- Jest;
+- Vitest;
+- Playwright;
+- Cypress;
+- ou o framework equivalente adotado pelo repositório.
+
+Antes de criar um teste:
+
+1. verifique o `package.json`;
+2. localize scripts de teste existentes;
+3. procure testes semelhantes;
+4. identifique a convenção de nome;
+5. siga a configuração já utilizada.
+
+Respeite convenções como:
+
+```text
+*.test.ts
+*.spec.ts
+__tests__/
+```
+
+Também respeite:
+
+- localização dos testes;
+- helpers existentes;
+- fixtures;
+- factories;
+- configuração de mocks;
+- comandos de execução;
+- setup global;
+- cobertura e relatórios configurados.
+
+Não crie comandos duplicados no `package.json` para a mesma finalidade.
+
+## Teste comportamento, não implementação
+
+Prefira validar o resultado observável:
+
+```ts
+const usuario = await service.criarUsuario(entrada)
+
+expect(usuario).toMatchObject({
+  email: entrada.email,
+})
+```
+
+Evite testar detalhes internos que podem mudar sem alterar o comportamento:
+
+```ts
+expect(mockRepository.save).toHaveBeenCalledWith(
+  expect.objectContaining({
+    email: entrada.email,
+  }),
+)
+```
+
+Mocks de chamadas podem ser apropriados quando:
+
+- a chamada externa é o próprio contrato testado;
+- é necessário verificar uma publicação de evento;
+- a operação tem efeito colateral relevante;
+- a dependência precisa ser isolada por custo ou indisponibilidade;
+- a arquitetura define explicitamente essa interação como contrato.
+
+Mesmo nesses casos, não teste apenas a ordem interna de chamadas sem verificar o resultado esperado.
+
+## Estrutura de um teste
+
+Um teste deve deixar claro:
+
+1. contexto inicial;
+2. ação executada;
+3. resultado esperado.
+
+Exemplo:
+
+```ts
+describe('criação de usuário', () => {
+  it('cria um usuário com os dados válidos', async () => {
+    const entrada = {
+      email: 'pessoa@exemplo.com',
+    }
+
+    const resultado = await service.criarUsuario(entrada)
+
+    expect(resultado.email).toBe(entrada.email)
+  })
+})
+```
+
+Use nomes que descrevam o comportamento, não a implementação.
+
+Prefira:
+
+```text
+retorna erro quando o token está expirado
+```
+
+A:
+
+```text
+chama validateToken duas vezes
+```
+
+## Caminhos de erro
+
+Inclua testes de erro quando a falha for relevante para o comportamento do sistema.
+
+Priorize especialmente:
+
+- autenticação;
+- autorização;
+- pagamentos;
+- mutações de dados;
+- validação de entrada;
+- tokens expirados;
+- recursos inexistentes;
+- conflitos;
+- limites de quantidade ou valor;
+- indisponibilidade de dependências;
+- duplicidade de requisições;
+- falhas de integração.
+
+Não transforme cada exceção interna em um teste separado automaticamente. Teste os erros que possuem significado para o consumidor ou para o domínio.
+
+## Correção de bugs
+
+Para corrigir um bug, siga o fluxo:
+
+```text
+Reproduzir → Isolar → Criar teste de regressão → Corrigir → Verificar
+```
+
+### Etapas
+
+1. reproduza o problema;
+2. identifique o menor cenário que falha;
+3. escreva um teste que falhe antes da correção;
+4. corrija a causa do problema;
+5. confirme que o teste de regressão passa;
+6. execute a suíte relacionada;
+7. verifique se não houve regressões.
+
+O teste de regressão deve falhar antes da correção sempre que isso for possível.
+
+Não altere o teste para fazê-lo passar sem corrigir o comportamento real.
+
+Se não for possível reproduzir o bug:
+
+- informe essa limitação;
+- registre as evidências disponíveis;
+- evite afirmar que a causa foi confirmada;
+- crie um teste baseado no contrato esperado somente quando esse contrato estiver documentado.
+
+## Refatorações
+
+Em refatorações sem mudança funcional:
+
+- execute os testes existentes antes da alteração, quando possível;
+- preserve os comportamentos observáveis;
+- evite misturar refatoração com feature;
+- adicione testes quando a refatoração revelar uma lacuna;
+- execute a mesma validação após a alteração;
+- investigue qualquer mudança inesperada nos resultados.
+
+Uma refatoração não deve reduzir cobertura comportamental importante sem uma justificativa explícita.
+
+## Testes de API e contratos
+
+Quando uma API for criada ou alterada, valide:
+
+- método e rota;
+- autenticação;
+- autorização;
+- formato da requisição;
+- validação;
+- status de sucesso;
+- formato da resposta;
+- status de erro;
+- códigos e mensagens contratados;
+- paginação, filtros e ordenação;
+- compatibilidade com consumidores existentes.
+
+Não altere apenas o teste para refletir uma mudança incompatível sem avaliar os consumidores da API.
+
+## Testes de dados e persistência
+
+Para alterações que envolvam banco ou persistência:
+
+- teste o caminho principal;
+- teste ausência de registros quando relevante;
+- teste violações de unicidade ou integridade;
+- valide transações quando fizerem parte do comportamento;
+- verifique conversão entre modelo persistido e modelo da aplicação;
+- evite depender de dados compartilhados entre testes;
+- limpe ou isole dados criados pelo teste;
+- siga a estratégia de banco usada pelo projeto.
+
+Não use dados de produção em testes.
+
+## Testes assíncronos e concorrência
+
+Para fluxos assíncronos:
+
+- aguarde explicitamente as operações;
+- evite sleeps arbitrários;
+- controle relógio e timers conforme o framework;
+- teste retries, timeout e falhas quando forem parte do contrato;
+- valide idempotência quando houver reprocessamento;
+- evite dependência em ordem não garantida.
+
+Não transforme um teste instável em “passou às vezes” aumentando timeouts sem investigar a causa.
+
+## Mocks, stubs e fixtures
+
+Use mocks e stubs com moderação.
+
+- Prefira dependências reais em testes de integração quando forem rápidas e controláveis.
+- Use mocks para isolar serviços externos ou efeitos colaterais caros.
+- Não mocke a unidade sob teste.
+- Mantenha fixtures pequenas e legíveis.
+- Evite factories que escondam dados essenciais do cenário.
+- Atualize mocks quando o contrato real mudar.
+- Não configure mocks de comportamentos que o teste não utiliza.
+
+Mocks desatualizados podem fazer o teste passar enquanto a aplicação real está quebrada.
+
+## Testes determinísticos
+
+Um teste deve produzir o mesmo resultado em execuções repetidas.
+
+Controle ou isole:
+
+- datas e horários;
+- aleatoriedade;
+- timezone;
+- ordem de execução;
+- estado global;
+- rede;
+- banco compartilhado;
+- variáveis de ambiente;
+- concorrência;
+- serviços externos.
+
+Se um teste falhar de forma intermitente:
+
+1. reproduza a intermitência;
+2. identifique a dependência instável;
+3. corrija a causa;
+4. não aumente apenas o timeout;
+5. não marque o teste como ignorado sem uma justificativa rastreável.
+
+## Qualidade mínima
+
+Antes de concluir uma alteração relevante:
+
+- execute os testes diretamente relacionados;
+- execute testes de regressão;
+- execute lint quando aplicável;
+- execute verificação de tipos quando aplicável;
+- execute a suíte mais ampla proporcional ao risco;
+- verifique o resultado do build quando a alteração puder afetá-lo;
+- confira o diff;
+- confirme que nenhum teste foi removido ou enfraquecido indevidamente.
+
+Informe exatamente:
+
+- quais comandos foram executados;
+- quais testes passaram;
+- quais falharam;
+- quais não puderam ser executados;
+- quais limitações permanecem.
+
+Não declare que a suíte está verde sem executá-la ou sem uma evidência equivalente.
+
+## CI
+
+- Não remova etapas existentes de lint, teste, build ou segurança.
+- Não enfraqueça critérios de aprovação para ocultar falhas.
+- Não altere pipelines sem seguir a rule de limites de alteração.
+- Mantenha scripts alinhados ao `package.json`.
+- Não crie comandos duplicados para a mesma ação.
+- Preserve testes executados em Pull Requests.
+- Se uma alteração exigir mudança no CI, explique o motivo e o impacto.
+- Não use o CI como substituto de testes locais quando a validação local estiver disponível.
+
+## Cobertura
+
+Use cobertura como indicador, não como único critério de qualidade.
+
+- Não escreva testes artificiais apenas para aumentar porcentagens.
+- Priorize fluxos críticos e regras de negócio.
+- Investigue reduções relevantes de cobertura.
+- Não aceite cobertura alta como prova de comportamento correto.
+- Considere mutações, casos de erro e limites quando o risco justificar.
+
+## Testes ausentes
+
+Se não houver infraestrutura de testes para uma área:
+
+1. verifique se existe padrão em outra parte do projeto;
+2. siga o framework já configurado;
+3. evite introduzir uma nova ferramenta sem justificativa;
+4. implemente a menor base necessária;
+5. documente a limitação;
+6. proponha uma evolução separada quando a criação da infraestrutura for grande demais para a tarefa atual.
+
+Não transforme uma mudança simples em uma migração completa de testes sem alinhamento.
+
+## Critério de conclusão
+
+Considere a tarefa validada somente quando:
+
+- o comportamento principal estiver coberto quando necessário;
+- regressões relevantes tiverem sido verificadas;
+- os testes diretamente relacionados passarem;
+- lint, tipos e build tiverem sido executados quando aplicável;
+- falhas e limitações estiverem documentadas;
+- o diff não contiver alterações não relacionadas;
+- nenhum teste tiver sido removido ou enfraquecido sem justificativa.

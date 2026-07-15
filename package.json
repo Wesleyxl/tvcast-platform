@@ -1,0 +1,36 @@
+{
+  "name": "tvcast",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma de streaming de alta performance com curadoria inteligente movida a IA.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wesleyxl/tvcast-platform.git"
+  },
+  "keywords": [
+    "laravel",
+    "react",
+    "docker",
+    "streaming",
+    "ai"
+  ],
+  "author": "Wesley",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Wesleyxl/tvcast-platform/issues"
+  },
+  "homepage": "https://github.com/Wesleyxl/tvcast-platform#readme",
+  "devDependencies": {
+    "turbo": "^2.10.5"
+  }
+}

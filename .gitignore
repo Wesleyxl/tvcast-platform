@@ -1,22 +1,35 @@
-# Logs e Cache
-/storage/logs/*
-/storage/framework/views/*
-/storage/framework/cache/*
-/bootstrap/cache/*
-
-# Node e dependências
-/node_modules
-/apps/web/node_modules
-/apps/web/dist
-/apps/api/vendor
-
-# Docker e Ambiente
+# Variáveis de ambiente e segredos
 .env
-.env.example
-docker-compose.override.yml
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Dependências
+node_modules/
+**/node_modules/
+vendor/
+**/vendor/
+
+# Builds e caches
+dist/
+**/dist/
+.turbo/
 .phpunit.result.cache
 
-# MacOS e IDE
+# Laravel
+**/storage/logs/*
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/bootstrap/cache/*.php
+
+# Docker
+docker-compose.override.yml
+
+# Sistema operacional e editores
 .DS_Store
-.vscode
-.idea
+Thumbs.db
+.vscode/
+.idea/
